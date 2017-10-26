@@ -147,7 +147,6 @@
             $('[showby="variable-type"][showfor="'+$(this).val()+'"]').attr("hidden", false);
         })
         $('#submit').click(function(){
-            $('#submit').attr("disabled",true);
             var $form = $('#vairable-form');
             var filled = true;
             $form.find('input[type=text],input[type=email], textarea').filter("*:not([hidden],[hidden] *)").each(function() {
@@ -170,12 +169,13 @@
                 return false;
             })
             if(!valid) return false;
-            
+
             var cat_counter = $('#categories-count');
             if (cat_counter.is("*:not([hidden] *)") && parseInt(cat_counter.val())<2){
                 alert("Must have at least 2 categories.");
                 return false;
             }
+            
             var form_array = $form.serializeArray();
             send_request(form_array);
         });
@@ -208,6 +208,7 @@
                 form[record.name].push(record.value);
             }
         });
+        $('#submit').attr("disabled",true);
         $.ajax({
             type: "POST",
             url: "/newIssue",
