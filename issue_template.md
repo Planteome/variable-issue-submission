@@ -7,15 +7,15 @@
 
 ## Request
 
-|                    |                         |
-| ------------------ | ----------------------- |
-| **Trait Name**         | {{data["trait-name"]}}  |
-| **Class**             | {{data["trait-class"]}} |
-| **Definition**         | {{data["trait-def"]}}   |
-| **Measurement Method** | {{data["method"]}}      |
-| **Measurement Type**   | {{data["trait-type"]}}  |
-{% if data["trait-type"]=="Unit" %}
-| **Measurement Unit**   | {{data["unit"]}}        |
+|                        |                           |
+| ---------------------- | ------------------------- |
+| **Trait Name**         | {{data["trait-name"]}}    |
+| **Definition**         | {{data["trait-def"]}}     |
+| **Trait Class**        | {{data["trait-class"]}}   |
+| **Measurement Method** | {{data["method"]}}        |
+| **Measurement Type**   | {{data["variable-type"]}} |
+{% if data["variable-type"]=="Unit" %}
+| **Measurement Unit**   | {{data["unit"]}}           |
 {% else %}
 
 #### Categories

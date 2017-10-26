@@ -1,0 +1,19 @@
+
+---------------------------------------------------------------------
+
+name : {{data["name"]}}
+program : {{data["program"]}}
+email : {{data["email"]}}
+trait-name : {{data["trait-name"]}}
+trait-def : {{data["trait-def"]}}
+trait-class : {{data["trait-class"]}}
+method : {{data["method"]}}
+variable-type : {{data["variable-type"]}}
+{% if data["variable-type"]=="Unit" %}
+unit : {{data["unit"]}}
+{% else %}
+categories:
+{% for c in data["categories"] %}
+{{c[0]}}	{{c[1]}}
+{% endfor %}
+{% endif %}
