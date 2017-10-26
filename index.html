@@ -62,13 +62,13 @@
                         <div class="pure-u-1 pure-u-md-1-3">
                             <label for="crop-repo">Crop</label>
                             <select name="crop-repo" id="crop-repo" class="pure-u-23-24" required>
-                                <option value="" disabled selected>Select crop...</option>
+                                <option value="placeholder" disabled selected>Select crop...</option>
                             </select>
                         </div>
                         <div class="pure-u-1 pure-u-md-1-3">
                             <label for="trait-class">Trait Class</label>
                             <select name="trait-class" id="trait-class" class="pure-u-23-24" required>
-                                <option value="" disabled selected>Select variable class...</option>
+                                <option value="placeholder" disabled selected>Select variable class...</option>
                                 <option>Abiotic Stress</option>
                                 <option>Argonomic</option>
                                 <option>Biotic Stress</option>
@@ -93,7 +93,7 @@
                         <div class="pure-u-1 pure-u-md-2-3">
                             <label for="variable-type">Measurement Type</label>
                             <select name="variable-type" id="variable-type" class="pure-u-23-24" required>
-                                <option value="" disabled selected>Select method type...</option>
+                                <option value="placeholder" disabled selected>Select method type...</option>
                                 <option value="Categorical">Categorical Measurement (e.g. [1,2,3,4,5] or [yellow, green, purple])</option>
                                 <option value="Unit">Unit Measurement (e.g. kg)</option>
                             </select>
@@ -147,6 +147,7 @@
             $('[showby="variable-type"][showfor="'+$(this).val()+'"]').attr("hidden", false);
         })
         $('#submit').click(function(){
+            $('#submit').attr("disabled",true);
             var $form = $('#vairable-form');
             var filled = true;
             $form.find('input[type=text],input[type=email], textarea').filter("*:not([hidden],[hidden] *)").each(function() {
@@ -176,9 +177,7 @@
                 return false;
             }
             var form_array = $form.serializeArray();
-            $form.find("input[type=text],input[type=email], textarea").val("");
-            
-            make_request(form_array);
+            send_request(form_array);
         });
         $("#add-category").click(function() { 
             $('#categories-count').val( function(i, oldval) {
@@ -197,7 +196,7 @@
             return false; 
         }); 
     });
-    function make_request(form_array){
+    function send_request(form_array){
         var form = {};
         form_array.forEach(function(record){
             if (form[record.name]===undefined){
@@ -214,7 +213,17 @@
             url: "/newIssue",
             contentType: "application/json; charset=utf-8",
             dataType: "json",
-            data: JSON.stringify(form)
+            data: JSON.stringify(form),
+            error: function(){
+                $('#submit').attr("disabled",false);
+            },
+            success: function(data){
+                alert("Successfully submitted request.");
+                $('#vairable-form').find('input[type=text],input[type=email], textarea').val("");
+                $('#vairable-form').find('select').val("placeholder").change();
+                $('#submit').attr("disabled",false);
+                window.location.href = data['html_url'];
+            }
         });
     }
     if (!Array.isArray) {

@@ -29,9 +29,12 @@ def make_issue(data):
     r = requests.session().post(url,json=issue)
     if r.status_code == 201:
         print('Success')
+        return r.content, 201
     else:
         print('Could not create Issue')
         print('Response:', r.content)
+        log.write("\n***FAILED***");
+        return 'Could not create Issue\nResponse:'+r.content, 500
 
 # app setup
 app = Flask(__name__,static_url_path='')
@@ -75,9 +78,8 @@ def send_js(path):
 @app.route('/newIssue', methods=["POST"])
 def new_issue():
     if not request.json:
-        abort(400)
+        return "must be json request", 400
     data = request.json
     if 'category-name' in data:
         data['categories'] = list(zip(data['category-name'],data['category-desc']))
-    make_issue(data)
-    return "success"
+    return make_issue(data);
