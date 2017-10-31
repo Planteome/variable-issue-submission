@@ -14,7 +14,7 @@ def load(name):
         
 # request and log templates
 env = Environment(loader=FunctionLoader(load),trim_blocks=True);
-issue_template = env.get_template('issue_template.md')
+issue_template = env.get_template('request_template.md')
 log_template = env.get_template('log_template.txt')
 issue_url = 'https://api.github.com/repos/{repo}/issues?access_token={token}'
 
