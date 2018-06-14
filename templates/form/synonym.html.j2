@@ -1,0 +1,118 @@
+<div class="pure-g" id="syn-form">
+    
+    <div class="pure-u-1 pure-u-md-1-2">
+        <label for="synonym-search">Search &amp; Select a Variable</label>
+        <input name="synonym-search" id="synonym-search" class="pure-u-23-24 onto-needed" type="text" required>
+    </div>
+    <br><br>
+    <div class="pure-u-1 pure-u-md-1-2"></div>
+    <div class="pure-u-1 pure-u-md-1 synonym-search-table" hidden>
+        <table class="pure-table" style="table-layout: fixed;">
+            <thead>
+                <tr>
+                    <th style="width:20%">ID</th>
+                    <th style="width:35%">Name</th>
+                    <th style="width:45%">Description</th>
+                </tr>
+            </thead>
+            <tbody id="synonym-search-body" style="font-size:0.75em">
+            </tbody>
+        </table>
+    </div>
+    <br><br>
+    <div class="pure-u-1 pure-u-md-1-2">
+        <label for="synonym-text">Requested Synonym Text</label>
+        <input name="synonym-text" id="synonym-text" class="pure-u-23-24" type="text" required>
+    </div>
+    <div class="pure-u-1 pure-u-md-1-2 optional">
+        <label for="synonym-xref">Cross-Refernce URI (Optional)</label>
+        <input name="synonym-xref" id="synonym-xref" class="pure-u-23-24" type="text" required>
+    </div>
+    <div class="pure-u-1 pure-u-md-1-1">
+        <label for="synonym-reason">Rational for Adding This Synonym</label>
+        <textarea name="synonym-reason" rows="8" cols="80"></textarea>
+    </div>
+</div>
+
+<script type="text/javascript">
+
+//Validation
+window.validators["#synonym"] = function(){
+    var $form = $('#syn-form, #submission-form');
+    var filled = true;
+    $form.find('input[type=text]:not(.optional), textarea, select').filter("*:not([hidden],[hidden] *)").each(function() {
+        if ( !$(this).val()){
+            alert("Please fill out all fields.");
+            console.log(this);
+            $(this).focus();
+            filled = false;
+            return false;
+        }
+    });
+    if(!filled) return false;
+    
+    var valid = true;
+    $form.find('fieldset *:invalid').filter("*:not([hidden],[hidden] *)").each(function(){
+        alert("Invalid value.");
+        console.log(this);
+        $(this).focus();
+        valid = false;
+        return false;
+    })
+    if(!valid) return false;
+
+    var cat_counter = $('#categories-count');
+    if (cat_counter.is("*:not([hidden] *)") && parseInt(cat_counter.val())<2){
+        alert("Must have at least 2 categories.");
+        return false;
+    }
+    return true;
+}
+
+// Variable Search
+$('#synonym-search').on("input",function(){
+    var options = {
+        shouldSort: true,
+        threshold: 0.1,
+        location: 0,
+        tokenize: true,
+        distance: 1000,
+        maxPatternLength: 2048,
+        minMatchCharLength: 1,
+        keys: [
+            "id",
+            "name",
+            "def",
+            "synonyms"
+        ]
+    };
+    var fuse = new Fuse(ontology.variables, options);
+    var search_text = $('#synonym-search').val();
+    var result = fuse.search(search_text).slice(0,10);    
+    var existing_body = $("#synonym-search-body");
+    var existing_rows = existing_body.children("tr");
+    var diff = result.length - existing_rows.length;
+    if (diff>0){
+        for (var i = 0; i < diff; i++) {
+            existing_body.append('<tr class="synonym-search-term"><td class="synonym-search-id"></td><td class="synonym-search-name"></td><td class="synonym-search-def"></td></tr>')
+        }
+    } 
+    else if(diff<0){
+        existing_rows.slice(existing_rows.length+diff,existing_rows.length).remove();
+    }        
+    
+    if (result.length>0){
+        $(".synonym-search-table").attr("hidden", false);
+    }
+    else {
+        $(".synonym-search-table").attr("hidden", true);
+    }  
+    
+    existing_body.children("tr.synonym-search-term").each(function(i){
+        $(this).children(".synonym-search-id").html('<label class="pure-radio"> <input class="synonym-search-radio" value="" type="radio" name="synonym-search-selected"> '+result[i]["id"]+'</label>');
+        $(this).find(".synonym-search-radio").attr("value",result[i]["id"]+" ("+result[i]["name"]+")");
+        $(this).children(".synonym-search-name").html(result[i]["name"]);
+        $(this).children(".synonym-search-def").html(result[i]["def"]);
+    })
+})
+</script>
