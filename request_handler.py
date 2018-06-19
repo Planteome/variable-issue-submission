@@ -179,7 +179,7 @@ def dowload_obo(repo,zipball_url):
         obos = [f for f in zp.namelist() if f.endswith(".obo")]
         obos.sort()
         default_obo = obos[1]
-        with io.TextIOWrapper(zp.open(default_obo)) as to_parse:
+        with io.TextIOWrapper(zp.open(default_obo), encoding="utf-8") as to_parse:
             db.parse_and_update(repo,to_parse)
 
 vcache = {}

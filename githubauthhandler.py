@@ -7,7 +7,10 @@ import string
 import urllib.parse
 
 from jwt.contrib.algorithms.pycrypto import RSAAlgorithm
-jwt.register_algorithm('RS256', RSAAlgorithm(RSAAlgorithm.SHA256))
+try:
+    jwt.register_algorithm('RS256', RSAAlgorithm(RSAAlgorithm.SHA256))
+except:
+    pass
 
 class GHOAuthHandler(object):
     state_set = string.ascii_uppercase+string.digits
