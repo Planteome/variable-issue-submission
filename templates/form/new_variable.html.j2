@@ -19,6 +19,11 @@
             <option disabled hidden> Existing </option>
         </select>
     </div>
+    
+    <div class="pure-u-1 pure-u-md-1">
+        <label for="trait-syn">Proposed Synonyms</label>
+        <input name="trait-syn" id="trait-syn" class="pure-u-23-24 onto-needed optional" type="text" required>
+    </div>
 
     <div class="pure-u-1 pure-u-md-1">
         <label for="trait-def">Detailed Trait Definition</label>
@@ -88,7 +93,7 @@
 window.validators["#new"] = function(){
     var $form = $('#new-form, #submission-form');
     var filled = true;
-    $form.find('input[type=text], textarea, select').filter("*:not([hidden],[hidden] *)").each(function() {
+    $form.find('input[type=text]:not(.optional), textarea, select').filter("*:not([hidden],[hidden] *)").each(function() {
         if ( !$(this).val()){
             alert("Please fill out all fields.");
             console.log(this);
@@ -118,7 +123,7 @@ window.validators["#new"] = function(){
 }
 
 // Variable Search
-$('#trait-def, #trait-name').on("change",function(){
+var on_trait_input = function(){
     var options = {
         shouldSort: true,
         threshold: 0.1,
@@ -161,6 +166,16 @@ $('#trait-def, #trait-name').on("change",function(){
         $(this).children(".existing-name").html(result[i]["name"]);
         $(this).children(".existing-def").html(result[i]["def"]);
     })
+};
+var trait_input_timeout;
+$('#trait-def, #trait-name').on("input",function() {
+    var context = this, args = arguments;
+    var later = function() {
+        trait_input_timeout = null;
+        on_trait_input.apply(context, args);
+    };
+    clearTimeout(trait_input_timeout);
+    trait_input_timeout = setTimeout(later, 200);
 })
 
 $('#variable-type').change(function(){
@@ -168,13 +183,14 @@ $('#variable-type').change(function(){
     $('[showby="variable-type"][showfor="'+$(this).val()+'"]').attr("hidden", false);
 })
 
-var category_template = '#newtemplates>.category';
+var category_template = $('#newtemplates>.category');
+category_template.detach();
 $("#add-category").click(function() { 
     $('#categories-count').val( function(i, oldval) {
         return parseInt(oldval)+1;
     });
     console.log($('#categories-count').val());
-    var newRow = $(category_template).clone(true).insertBefore("#add-category");
+    var newRow = category_template.clone(true).insertBefore("#add-category");
     newRow.find(".remove-category").click(function(){
         $('#categories-count').val( function(i, oldval) {
             return parseInt(oldval)-1;

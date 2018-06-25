@@ -3,6 +3,9 @@
 |                        |                                  |
 | ---------------------- | -------------------------------- |
 | **Trait Name**         | {{data["trait-name"]|trim|e}}    |
+{%- if data["trait-syn"]!="" %}
+| **Proposed Synonyms**  | {{data["trait-syn"]|trim|e}}     |
+{%- endif %}
 | **Definition**         | {{data["trait-def"]|trim|e}}     |
 | **Trait Class**        | {{data["trait-class"]|trim|e}}   |
 | **Measurement Method** | {{data["method"]|trim|e}}        |
