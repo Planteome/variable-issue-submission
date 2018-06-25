@@ -12,7 +12,6 @@ import zipfile
 import io
 import urllib.parse
 from pathlib import Path
-from threading import Timer
 
 # file loader
 def load(name):
@@ -129,7 +128,7 @@ def github_redirect():
     data = request.json
     if not data:
         return "must be json request", 400
-    redirect_uri = oh.get_redirect({"cached_as":cache_val(data)})
+    redirect_uri = oh.get_redirect({"cached_as":db.cache_store(data)})
     return jsonify({"html_url":redirect_uri})
     
 @app.route('/submit/github/authorized', methods=["GET"])
@@ -137,7 +136,7 @@ def new_issue_github():
     code = request.args.get('code')
     state = request.args.get('state')
     token = oh.get_token(state,code)
-    data = uncache_val(oh.get_state(state)["cached_as"])
+    data = db.cache_retrieve(oh.get_state(state)["cached_as"])
     issue_data, responsecode = make_issue(data,token)
     issue_url = json.loads(issue_data)["html_url"]
     return redirect(issue_url,303)
@@ -181,20 +180,3 @@ def dowload_obo(repo,zipball_url):
         default_obo = obos[1]
         with io.TextIOWrapper(zp.open(default_obo), encoding="utf-8") as to_parse:
             db.parse_and_update(repo,to_parse)
-
-vcache = {}
-vcid = 0
-def cache_val(val):
-    global vcid
-    global vcache
-    print(vcache)
-    vcache[vcid] = val
-    Timer(14400, uncache_val, (vcid,) ).start()
-    vcid+=1
-    return vcid-1
-def uncache_val(vcid):
-    global vcache
-    print(vcache)
-    val = vcache[vcid]
-    del vcache[vcid]
-    return val

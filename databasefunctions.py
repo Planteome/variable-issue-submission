@@ -1,6 +1,7 @@
 import sqlite3
 import json
 import pyobo
+from threading import Timer
 
 _DBPATH = "./varsub.db"
 
@@ -16,6 +17,11 @@ def __main():
             c.execute('''CREATE TABLE installations (
                              repo TEXT PRIMARY KEY,
                              install_id TEXT NOT NULL
+                         );''')
+        if not c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='datacache';").fetchone():
+            c.execute('''CREATE TABLE datacache (
+                             cache_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                             json TEXT NOT NULL
                          );''')
 
 def update_variables(repo,search_data):
@@ -75,12 +81,22 @@ def get_installation(repo):
         c.execute("SELECT install_id FROM installations WHERE repo=?;", [repo])
         return c.fetchone()[0]
     
+def cache_store(data, timeout=14400):
+    json_data = json.dumps(data)
+    with sqlite3.connect(_DBPATH) as conn:
+        c = conn.cursor()
+        c.execute("INSERT INTO datacache(json) VALUES (?);", [json_data])
+        c.execute("SELECT cache_id FROM datacache WHERE rowid=last_insert_rowid();")
+        cache_id = c.fetchone()[0]
+    Timer(timeout, cache_retrieve, (cache_id,) ).start()
+    return cache_id
 
+def cache_retrieve(cache_id):
+    with sqlite3.connect(_DBPATH) as conn:
+        c = conn.cursor()
+        c.execute('SELECT json FROM datacache WHERE cache_id=?;', [cache_id])
+        cached_data = c.fetchone()[0]
+        c.execute('DELETE FROM datacache WHERE cache_id=?;', [cache_id])
+        return json.loads(cached_data)
      
 __main()
-
-# 
-# with sqlite3.connect(_DBPATH) as conn:
-#     c = conn.cursor()
-#     c.execute('SELECT json FROM variables')
-#     print(c.fetchall())
