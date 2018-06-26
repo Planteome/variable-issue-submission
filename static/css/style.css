@@ -1,0 +1,29 @@
+.pure-button{
+    border-radius: 4px;
+    letter-spacing: 0;
+}
+.button-error {
+    background: rgb(202, 60, 60);
+    color: white;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+.remove-div {
+    vertical-align: bottom;
+    padding-bottom: 0.3em;
+}
+#add-category{
+    margin-top: 0.3em;
+}
+#categorical-wrapper{
+    margin-bottom: 1em;
+}
+
+.tab-div:not(:target){
+    display: none;
+}
+.submit-div{
+    display:none;
+}
+.tab-div:target ~ .submit-div{
+    display:block;
+}

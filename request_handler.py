@@ -1,6 +1,5 @@
 from flask import Flask, request, send_from_directory, make_response, redirect, render_template, jsonify
 from jinja2 import Environment, FunctionLoader
-from flask_basicauth import BasicAuth
 from functools import wraps, update_wrapper
 from datetime import datetime
 import json
@@ -13,24 +12,25 @@ import io
 import urllib.parse
 from pathlib import Path
 
-# file loader
+# file loader (for config file)
 def load(name):
     with open(name) as fi:
         return fi.read()
         
-# app setup
+# Flask app setup
 app = Flask(__name__)
 
 # config
 with open("config.json") as conf_file:
     config = json.load(conf_file);
-app.config['BASIC_AUTH_USERNAME'] = config['username']
-app.config['BASIC_AUTH_PASSWORD'] = config['password']
-basic_auth = BasicAuth(app)
 pkey = Path(config['skey']).read_text()
 
+# Setup for GitHub App
 ah = GHAppAuthHandler(config['iss'], pkey)
-oh = GHOAuthHandler(urllib.parse.urljoin(config['base_url'], "/submit/github/authorized"),config['oauth']['id'],config['oauth']['secret'])
+# Setup for GitHub OAuth
+oauth_path = "/authorized/oauth"
+auth_url = urllib.parse.urljoin(config['base_url'], oauth_path)
+oh = GHOAuthHandler(auth_url,config['oauth']['id'],config['oauth']['secret'])
 
 # make issue
 def make_issue(data,token=False):
@@ -62,6 +62,7 @@ def make_issue(data,token=False):
         print('Response:', r.content)
         return 'Could not create Issue\nResponse:'+r.content, 500
 
+# assign labels and assignees
 def assign_and_label_issue(issue_obj,data):
     token = ah.installationToken(db.get_installation(data['onto-repo']))
     url = issue_obj["url"]+'?access_token={token}'.format(token=token)
@@ -128,18 +129,20 @@ def github_redirect():
     data = request.json
     if not data:
         return "must be json request", 400
-    redirect_uri = oh.get_redirect({"cached_as":db.cache_store(data)})
+    redirect_uri = oh.get_redirect({"goto":"issue","cached_as":db.cache_store(data)})
     return jsonify({"html_url":redirect_uri})
     
-@app.route('/submit/github/authorized', methods=["GET"])
-def new_issue_github():
+@app.route(oauth_path, methods=["GET"])
+def oauth_receive():
     code = request.args.get('code')
     state = request.args.get('state')
     token = oh.get_token(state,code)
-    data = db.cache_retrieve(oh.get_state(state)["cached_as"])
-    issue_data, responsecode = make_issue(data,token)
-    issue_url = json.loads(issue_data)["html_url"]
-    return redirect(issue_url,303)
+    state_content = oh.get_state(state)
+    if state_content["goto"]=="issue":
+        data = db.cache_retrieve(state_content["cached_as"])
+        issue_data, responsecode = make_issue(data,token)
+        issue_url = json.loads(issue_data)["html_url"]
+        return redirect(issue_url,303)
     
 @app.route('/webhook', methods=["POST"])
 def webhook():
