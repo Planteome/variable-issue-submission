@@ -11,6 +11,7 @@ import zipfile
 import io
 import urllib.parse
 from pathlib import Path
+import os.path
 
 # file loader (for config file)
 def load(name):
@@ -34,7 +35,7 @@ oh = GHOAuthHandler(auth_url,config['oauth']['id'],config['oauth']['secret'])
 
 # make issue
 def make_issue(data,token=False):
-    if not data['onto-repo'] in config['repo_info']:
+    if not data['onto-repo'] in db.get_repo_info():
         return "Can't create issue for unknown repo"+r.content, 500
     if 'category-name' in data:
         data['categories'] = list(zip(data['category-name'],data['category-desc']))
@@ -66,7 +67,7 @@ def make_issue(data,token=False):
 def assign_and_label_issue(issue_obj,data):
     token = ah.installationToken(db.get_installation(data['onto-repo']))
     url = issue_obj["url"]+'?access_token={token}'.format(token=token)
-    assignees = config['repo_info'][data['onto-repo']]["curators"]
+    assignees = db.get_repo_info(repo=data['onto-repo'])["curators"]
     labels = []
     if data["subtype"]=="new":
         labels.append("Creation Request")
@@ -102,8 +103,7 @@ def nocache(view):
 @app.route('/')
 @app.route('/index.html')
 def root():
-    return render_template('form.html.j2', repos=config["repo_info"])
-    return send_from_directory('','index.html')
+    return render_template('form.html.j2', repos=db.get_repo_info())
     
 @app.route('/static/<path:path>')
 def send_js(path):
@@ -112,7 +112,7 @@ def send_js(path):
 @app.route('/variables', methods=["GET"])
 def variables():
     repo = request.args.get('repo')
-    if not repo in config['repo_info']:
+    if not db.get_repo_info(repo=repo):
         return "Can't get variables for unknown repo "+repo, 500
     variable_list = db.get_variables(repo)
     return jsonify(variable_list);
@@ -127,10 +127,23 @@ def new_issue_email():
 @app.route('/submit/github', methods=["POST"])
 def github_redirect():
     data = request.json
+    data["email"] = ""
     if not data:
         return "must be json request", 400
     redirect_uri = oh.get_redirect({"goto":"issue","cached_as":db.cache_store(data)})
     return jsonify({"html_url":redirect_uri})
+    
+@app.route('/deploy')
+def deploy():
+    install_id = request.args.get('installation_id');
+    return render_template('deploy.html.j2', repos=db.get_repo_info(install_id=install_id))
+
+@app.route('/deploy/save', methods=["POST"])
+def deploy_save():
+    data = request.json
+    updated = jsonify(db.set_repo_info(data['repo'],data))
+    get_latest_releases([data['repo']])
+    return updated
     
 @app.route(oauth_path, methods=["GET"])
 def oauth_receive():
@@ -160,11 +173,15 @@ def webhook():
     if "installation" in data and data['action']=="deleted":
         return delete_installation(data)
         
+    if "installation" in data and data['action'] in ["added","removed"]:
+        return update_installation(data)
+        
 def create_installation(data):
     install_id = data['installation']['id']
-    repos = [r['full_name'] for r in data['repositories']]
-    db.add_installation(install_id,repos)
-    return " ".join(repos)+" | added as "+str(install_id), 202
+    add = [r['full_name'] for r in data['repositories']]
+    db.add_repos(install_id,add)
+    get_latest_releases(add)
+    return " ".join(add)+" | added as "+str(install_id), 202
 
 def delete_installation(data):
     install_id = data['installation']['id']
@@ -172,14 +189,36 @@ def delete_installation(data):
     msg = " ".join(r[0] for r in remmed)+" | removed as "+str(install_id)
     return msg, 202
 
+def update_installation(data):
+    install_id = data['installation']['id']
+    rem = [r['full_name'] for r in data['repositories_removed']]
+    add = [r['full_name'] for r in data['repositories_added']]
+    db.add_repos(install_id,add)
+    db.rem_repos(rem)
+    get_latest_releases(add)
+    return "updated "+str(install_id), 202
+    
+def get_latest_releases(repos):
+    for repo in repos:
+        token = ah.installationToken(db.get_installation(repo))
+        release_info = "https://api.github.com/repos/{repo}/releases/latest?access_token={token}".format(repo=repo,token=token)
+        info = requests.session().get(release_info).json()
+        if not 'zipball_url' in info:
+            print("No release for {repo}".format(repo=repo))
+        else:
+            dowload_obo(repo,info['zipball_url'])
+                
+    
 def dowload_obo(repo,zipball_url):
-    print(repo,zipball_url)
+    print("Downloading release for {repo}:".format(repo=repo),zipball_url)
     token = ah.installationToken(db.get_installation(repo))
+    obopath = Path(db.get_repo_info(repo=repo)['master_obo_path'])
     download = zipball_url+"?access_token={token}".format(token=token)
     r = requests.session().get(download)
     with zipfile.ZipFile(io.BytesIO(r.content)) as zp:
-        obos = [f for f in zp.namelist() if f.endswith(".obo")]
+        obos = [f for f in zp.namelist() if obopath==Path(f).relative_to(f.split(os.path.sep)[0])]
         obos.sort()
-        default_obo = obos[1]
-        with io.TextIOWrapper(zp.open(default_obo), encoding="utf-8") as to_parse:
-            db.parse_and_update(repo,to_parse)
+        if(len(obos)>0):
+            master_obo = obos[0]
+            with io.TextIOWrapper(zp.open(master_obo), encoding="utf-8") as to_parse:
+                db.parse_and_update(repo,to_parse)

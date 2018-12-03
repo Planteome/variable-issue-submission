@@ -33,6 +33,7 @@
             'loaded':false,
             'terms':[]
         }
+        if(!window.ontology.name) return;
         $.ajax({
             type: "GET",
             url: "/variables?repo="+encodeURIComponent(ontology.name),

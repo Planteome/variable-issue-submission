@@ -8,15 +8,14 @@ _DBPATH = "./varsub.db"
 def __main():
     with sqlite3.connect(_DBPATH) as conn:
         c = conn.cursor()
-        if not c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='variables';").fetchone():
-            c.execute('''CREATE TABLE variables (
+        if not c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='repositories';").fetchone():
+            c.execute('''CREATE TABLE repositories (
                              repo TEXT PRIMARY KEY,
-                             json TEXT NOT NULL
-                         );''')
-        if not c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='installations';").fetchone():
-            c.execute('''CREATE TABLE installations (
-                             repo TEXT PRIMARY KEY,
-                             install_id TEXT NOT NULL
+                             install_id TEXT NOT NULL,
+                             name TEXT NOT NULL,
+                             curators TEXT NOT NULL,
+                             master_obo_path TEXT NOT NULL,
+                             variables_json TEXT NOT NULL
                          );''')
         if not c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='datacache';").fetchone():
             c.execute('''CREATE TABLE datacache (
@@ -28,16 +27,14 @@ def update_variables(repo,search_data):
     with sqlite3.connect(_DBPATH) as conn:
         c = conn.cursor()
         search_json = json.dumps(search_data)
-        c.execute("DELETE FROM variables WHERE repo=?", [repo])
-        c.execute("INSERT INTO variables VALUES (?,?)", [
-            repo,
-            search_json
-            ])
+        c.execute("UPDATE repositories SET variables_json = ? WHERE repo=?;", [
+            search_json,
+            repo
+        ]);
     
 def parse_and_update(repo,obo):
     search_data = []
     o = pyobo(obo)
-    print(type(o["CO_331:0000149"]),o["CO_331:0000149"]["relationship"])
     for term in o.getTerms():
         if any(relationship.value.relation.id == "variable_of" for relationship in term["relationship"]):
             #is a variable
@@ -47,39 +44,79 @@ def parse_and_update(repo,obo):
                 "def":term["def"].value if "def" in term else "",
                 "synonyms":", ".join([syn.value for syn in term["synonym"]]),
             })
-            if term['id'].value.id=="CO_331:0000149":
-                print(term,search_data[-1])
             
     update_variables(repo, search_data)
     
 def get_variables(repo):
     with sqlite3.connect(_DBPATH) as conn:
         c = conn.cursor()
-        c.execute("SELECT json FROM variables WHERE repo=?", [repo])
+        c.execute("SELECT variables_json FROM repositories WHERE repo=?", [repo])
         return json.loads(c.fetchone()[0])
     
-def add_installation(install_id,repos):
+def add_repos(install_id,repos):
     with sqlite3.connect(_DBPATH) as conn:
         c = conn.cursor()
         for repo in repos:
-            c.execute("DELETE FROM installations WHERE repo=?;", [repo])
-            c.execute("INSERT INTO installations VALUES (?,?);", [
+            c.execute("DELETE FROM repositories WHERE repo=?;", [repo])
+            c.execute("INSERT INTO repositories VALUES (?,?,?,?,?,?);", [
                 repo,
-                install_id ])
+                install_id,
+                repo,
+                "[]",
+                "master.obo",
+                "[]"
+                ])
+
+def rem_repos(repos):
+    with sqlite3.connect(_DBPATH) as conn:
+        c = conn.cursor()
+        for repo in repos:
+            c.execute("DELETE FROM repositories WHERE repo=?;", [repo])
             
 def rem_installation(install_id):
     with sqlite3.connect(_DBPATH) as conn:
         c = conn.cursor()
-        c.execute('SELECT repo FROM installations WHERE install_id=?;', [install_id])
+        c.execute('SELECT repo FROM repositories WHERE install_id=?;', [install_id])
         targets = c.fetchall()
-        c.execute("DELETE FROM installations WHERE install_id=?;", [install_id])
+        c.execute("DELETE FROM repositories WHERE install_id=?;", [install_id])
         return targets
             
 def get_installation(repo):
     with sqlite3.connect(_DBPATH) as conn:
         c = conn.cursor()
-        c.execute("SELECT install_id FROM installations WHERE repo=?;", [repo])
+        c.execute("SELECT install_id FROM repositories WHERE repo=?;", [repo])
         return c.fetchone()[0]
+        
+def get_repo_info(install_id=None,repo=None):
+    result = {}
+    with sqlite3.connect(_DBPATH) as conn:
+        c = conn.cursor()
+        if(install_id!=None):
+            c.execute("SELECT * FROM repositories WHERE install_id=?;", [install_id])
+        elif(repo!=None):
+            c.execute("SELECT * FROM repositories WHERE repo=?;", [repo])
+        else:
+            c.execute("SELECT * FROM repositories;")
+        for row in c.fetchall():
+            result[row[0]] = {
+                "name": row[2],
+                "curators": json.loads(row[3]),
+                "master_obo_path": row[4]
+            }
+    if(repo!=None): result = result[repo]
+    return result
+
+def set_repo_info(repo,info):
+    with sqlite3.connect(_DBPATH) as conn:
+        c = conn.cursor()
+        c.execute("UPDATE repositories SET name = ?, curators = ?, master_obo_path = ? WHERE repo=?;", [
+            info['name'],
+            json.dumps(info['curators']),
+            info['master_obo_path'],
+            repo
+        ]);
+    return get_repo_info(repo=repo);
+        
     
 def cache_store(data, timeout=14400):
     json_data = json.dumps(data)
