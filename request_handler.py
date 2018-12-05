@@ -3,6 +3,8 @@ from jinja2 import Environment, FunctionLoader
 from functools import wraps, update_wrapper
 from datetime import datetime
 import json
+import hmac
+import hashlib
 import sqlite3
 import requests
 import databasefunctions as db
@@ -32,6 +34,9 @@ ah = GHAppAuthHandler(config['iss'], pkey)
 oauth_path = "/authorized/oauth"
 auth_url = urllib.parse.urljoin(config['base_url'], oauth_path)
 oh = GHOAuthHandler(auth_url,config['oauth']['id'],config['oauth']['secret'])
+
+#webhook setup
+webhook_secret = bytes(config['webhook_secret'],'utf-8')
 
 # make issue
 def make_issue(data,token=False):
@@ -160,6 +165,11 @@ def oauth_receive():
 @app.route('/webhook', methods=["POST"])
 def webhook():
     data = request.json
+    
+    digest = hmac.new(webhook_secret, request.data, hashlib.sha1).hexdigest()
+    if not hmac.compare_digest(request.headers['X-Hub-Signature'].split("=")[1], digest):
+        abort(400, 'Invalid signature')
+        
     if not data:
         return "must be json request", 400
         

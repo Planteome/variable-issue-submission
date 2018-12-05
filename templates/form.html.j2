@@ -111,6 +111,7 @@
     }
     
     function send_request(form_array,post_url){
+        $('#emailsubmit, #githubsubmit').attr("disabled", "disabled");
         var form = {"subtype":location.hash.substr(1)};
         form_array.forEach(function(record){
             if (form[record.name]===undefined){
@@ -130,13 +131,12 @@
             dataType: "json",
             data: JSON.stringify(form),
             error: function(){
-                $('#emailsubmit').attr("disabled",false);
+                $('#emailsubmit, #githubsubmit').attr("disabled", false);
                 alert("Something went wrong");
             },
             success: function(data){
                 $('#vairable-form').find('input[type=text],input[type=email], textarea').val("");
                 $('#vairable-form').find('select').val("placeholder").change();
-                $('#emailsubmit').attr("disabled",false);
                 window.location.href = data['html_url'];
             }
         });
