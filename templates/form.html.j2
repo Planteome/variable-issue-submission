@@ -18,6 +18,10 @@
     <div class="pure-g">
         <div class="pure-u-2-24"></div>
         <div class="pure-u-20-24">
+            <br>
+            <img src="/static/images/crop_ontology.png" class="logo-img" alt="crop ontology">
+            <img src="/static/images/planteome.png" class="logo-img" alt="planteome">
+            <img src="/static/images/bti.jpg" class="logo-img" alt="boyce thompson institute">
             <h1>Crop Ontology Variable Request Form</h1>
             <form id="vairable-form" class="pure-form pure-form-stacked">
                 <script type="text/javascript">window.validators = []</script>
@@ -49,8 +53,14 @@
                     <div class="submit-div pure-g">
                         <div class="pure-u-1">
                             <legend>Submit Your Request</legend>
-                            <span class="pure-form-message-inline">You may choose to submit using either a GitHub account or an email adress. Using a GitHub account enables you to recieve emails notifying you of comments on submitted traits, and allows you to leave responses. <span style="color:red;">If you choose to submit using an email rather than a GitHub account, your email will be <strong>permenantly & publicly</strong> visible on the created issue, so that curators may contact you. If you need to keep your email private, please <a href="https://github.com/join">create a GitHub account</a>.</span></span>
+                            <span class="pure-form-message-inline">You may choose to submit using either a GitHub account or an email adress. Using a GitHub account enables you to recieve emails notifying you of comments on submitted traits, and allows you to leave responses. <span style="color:red;">If you choose to submit using an email rather than a GitHub account, your email will be <strong>publicly</strong> visible on the created issue, so that curators may contact you. If you need to keep your email private, please <a href="https://github.com/join">create a GitHub account</a>.</span></span>
                             <br><br>
+                        </div>
+                        <div class="pure-u-1">
+                          <label for="consent">
+                              <input id="consent" required type="checkbox"> I have read and understand the submission guidelines above.
+                          </label>
+                          <br>
                         </div>
                         <div class="pure-u-1" style="white-space:nowrap;">
                             <button id="githubsubmit" type="button" class="pure-button pure-button-primary">
@@ -77,8 +87,14 @@
     <script type="text/javascript">
 
     $('#emailsubmit').click(function(){
+        
         if (!window.validators[location.hash]()){
             return false
+        }
+        if ( $("#consent").prop("checked") == false){
+            alert("Consent unchecked.");
+            $("#consent").focus();
+            return false;
         }
         var email_ok = true;
         $('#email').each(function() {
@@ -99,6 +115,11 @@
     $('#githubsubmit').click(function(){
         if (!window.validators[location.hash]()){
             return false
+        }
+        if ( $("#consent").prop("checked") == false){
+            alert("Consent unchecked.");
+            $("#consent").focus();
+            return false;
         }
         var form_array = $('#vairable-form').serializeArray();
         send_request(form_array,"/submit/github");
