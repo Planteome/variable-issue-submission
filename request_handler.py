@@ -66,7 +66,7 @@ def make_issue(data,token=False):
     else:
         print('Could not create Issue')
         print('Response:', r.content)
-        return 'Could not create Issue\nResponse:'+r.content, 500
+        return 'Could not create Issue\nResponse:'+str(r.content), 500
 
 # assign labels and assignees
 def assign_and_label_issue(issue_obj,data):
