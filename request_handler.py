@@ -159,6 +159,8 @@ def oauth_receive():
     if state_content["goto"]=="issue":
         data = db.cache_retrieve(state_content["cached_as"])
         issue_data, responsecode = make_issue(data,token)
+        if(responsecode!=201):
+            return issue_data, 500
         issue_url = json.loads(issue_data)["html_url"]
         return redirect(issue_url,303)
     
