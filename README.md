@@ -1,10 +1,23 @@
-# variable-issue-submission
-This repo contains python3 code and other required files for hosting a form & making API calls in order to create ontology variable requests. A log of all request is avaible (password protected) at `$ROOTURL/log`. In order to run, the script accesses files relative to itself and so should be launched with the repo as the working directory. It also requires a `config.json` file in the following format: 
+# Ontology Variable Request Form
+This repo contains python3 code and other required files for hosting a form & making API calls in order to create ontology variable requests. It acts as both a GitHub App and a GitHub OAuth App to allow users to submit request either under their GitHub username, or an email (without requiring a GitHub account).
 
+The following information must be present in $REPO/config.json in order to run the App.
 ```javascript
 {
-    "token":"GitHubTokenHere",
-    "username":"log_username",
-    "password":"log_password"
+    "port":"-----",
+    "base_url":"https://URL.where/app/is/served",
+    "iss":"-----",
+    "skey":"./path/to/oauth.private-key.pem",
+    "webhook_secret":"-----",
+    "oauth":{
+        "id":"-----",
+        "secret":"-----"
+    }
 }
 ```
+
+## Setup Steps
+
+1. Create a new GitHub App. From the GitHub App settings page, retrieve and enter into config.json the ISS, private key, and webhook secret.
+2. Create a new GitHub OAuth App. From the OAuth App settings page, retrieve and enter into config.json the oauth ID and oauth secret.
+3. Run serve.py to launch the app, it will launch on the port specified in config.json.

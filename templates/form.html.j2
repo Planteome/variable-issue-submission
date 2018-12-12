@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Crop Ontology Request Form</title>
+    <link rel="stylesheet" href="static/css/pure-min.css">
+    <link rel="stylesheet" href="static/css/grids-responsive-min.css">
+    <link rel="stylesheet" href="static/css/style.css">
+    <script src="static/jquery-3.2.1.min.js" charset="utf-8"></script>
+    <script src="static/fuse.min.js" charset="utf-8"></script>
+    <script type="text/javascript">
+        window.validators = {}
+    </script>
+</head>
+
+<body>
+    <div class="pure-g">
+        <div class="pure-u-2-24"></div>
+        <div class="pure-u-20-24">
+            <br>
+            <img src="/static/images/crop_ontology.png" class="logo-img" alt="crop ontology">
+            <img src="/static/images/planteome.png" class="logo-img" alt="planteome">
+            <img src="/static/images/bti.jpg" class="logo-img" alt="boyce thompson institute">
+            <h1>Crop Ontology Variable Request Form</h1>
+            <form id="vairable-form" class="pure-form pure-form-stacked">
+                <script type="text/javascript">window.validators = []</script>
+                <fieldset>
+                    
+                    {% include 'form/submission.html.j2' %}
+                    
+                    <br><br>
+                    
+                    <legend>Request Type</legend>
+                    <div class="pure-button-group" role="group" aria-label="..." style="white-space:nowrap;">
+                        <a href="#new" class="pure-button tab-controller">New Variable</a>
+                        <a href="#update" class="pure-button tab-controller">Update Variable</a>
+                        <a href="#synonym" class="pure-button tab-controller">Variable Synonym</a>
+                    </div>
+                    <br><br>
+                    <div id="new" class="tab-div">
+                        {% include 'form/new_variable.html.j2' %}
+                    </div>
+                    <div id="update" class="tab-div">
+                        {% include 'form/update_variable.html.j2' %}
+                    </div>
+                    <div id="synonym" class="tab-div">
+                        {% include 'form/synonym.html.j2' %}
+                    </div>
+                    
+                    <br><br>
+                    
+                    <div class="submit-div pure-g">
+                        <div class="pure-u-1">
+                            <legend>Submit Your Request</legend>
+                            <span class="pure-form-message-inline">You may choose to submit using either a GitHub account or an email adress. Using a GitHub account enables you to recieve emails notifying you of comments on submitted traits, and allows you to leave responses. <span style="color:red;">If you choose to submit using an email rather than a GitHub account, your email will be <strong>publicly</strong> visible on the created issue, so that curators may contact you. If you need to keep your email private, please <a href="https://github.com/join">create a GitHub account</a>.</span></span>
+                            <br><br>
+                        </div>
+                        <div class="pure-u-1">
+                          <label for="consent">
+                              <input id="consent" required type="checkbox"> I have read and understand the submission guidelines above.
+                          </label>
+                          <br>
+                        </div>
+                        <div class="pure-u-1" style="white-space:nowrap;">
+                            <button id="githubsubmit" type="button" class="pure-button pure-button-primary">
+                                <svg class="octicon octicon-mark-github" viewBox="0 0 16 16" version="1.1em" width="1.1em" aria-hidden="true" style="margin-bottom: -3px;"><path fill="#fff" fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path></svg>
+                                Submit with GitHub
+                            </button>
+                            <strong>&nbsp;OR&nbsp;</strong>
+                        </div>
+                        <br><br>
+                        <div class="pure-u-1">
+                            <label for="email">Public Email</label>
+                            <input name="email" id="email" autocomplete="email" type="email" required>
+                            <button id="emailsubmit" type="button" class="pure-button pure-button-primary">Submit with Public Email</button>
+                        </div>
+                    </div>
+                </fieldset>
+            </form>
+            <br><br>
+            <hr>
+            <a class="pure-button" href="https://github.com/apps/ontology-variable-submission-bot">Connect a New OBO Repository to this Form</a>
+            <br><br>
+        </div>
+    </div>
+    <script type="text/javascript">
+
+    $('#emailsubmit').click(function(){
+        
+        if (!window.validators[location.hash]()){
+            return false
+        }
+        if ( $("#consent").prop("checked") == false){
+            alert("Consent unchecked.");
+            $("#consent").focus();
+            return false;
+        }
+        var email_ok = true;
+        $('#email').each(function() {
+            if ( !$(this).val()){
+                alert("Submitting with an email requires providing an email!");
+                $(this).focus();
+                email_ok = false;
+            }
+        });
+        if (!email_ok || $('#email:invalid').length>0){
+            alert("Invalid email.");
+            return false;
+        }
+        var form_array = $('#vairable-form').serializeArray();
+        send_request(form_array,"/submit/email");
+    });
+    
+    $('#githubsubmit').click(function(){
+        if (!window.validators[location.hash]()){
+            return false
+        }
+        if ( $("#consent").prop("checked") == false){
+            alert("Consent unchecked.");
+            $("#consent").focus();
+            return false;
+        }
+        var form_array = $('#vairable-form').serializeArray();
+        send_request(form_array,"/submit/github");
+    });
+    
+    if (!Array.isArray) {
+      Array.isArray = function(arg) {
+        return Object.prototype.toString.call(arg) === '[object Array]';
+      };
+    }
+    
+    function send_request(form_array,post_url){
+        $('#emailsubmit, #githubsubmit').attr("disabled", "disabled");
+        var form = {"subtype":location.hash.substr(1)};
+        form_array.forEach(function(record){
+            if (form[record.name]===undefined){
+                form[record.name] = record.value;
+            } else if (!Array.isArray(form[record.name])) {
+                form[record.name] = [form[record.name]];
+            } 
+            if (Array.isArray(form[record.name])) {
+                form[record.name].push(record.value);
+            }
+        });
+        $('#emailsubmit').attr("disabled",true);
+        $.ajax({
+            type: "POST",
+            url: post_url,
+            contentType: "application/json; charset=utf-8",
+            dataType: "json",
+            data: JSON.stringify(form),
+            error: function(){
+                $('#emailsubmit, #githubsubmit').attr("disabled", false);
+                alert("Something went wrong");
+            },
+            success: function(data){
+                $('#vairable-form').find('input[type=text],input[type=email], textarea').val("");
+                $('#vairable-form').find('select').val("placeholder").change();
+                window.location.href = data['html_url'];
+            }
+        });
+    }
+    
+    
+    var active = document.querySelector('.tab-controller[href="'+location.hash+'"]');
+    if (active){
+        active.classList.add('pure-button-active');
+        active.classList.add('pure-button-primary');    
+    }
+    var hashLinks = document.querySelectorAll(".tab-controller");
+    [].forEach.call(hashLinks, function (link) {
+        link.addEventListener("click", function (event) {
+            event.preventDefault();
+            [].forEach.call(hashLinks, function (otherlink) {
+                otherlink.classList.remove('pure-button-active');
+                otherlink.classList.remove('pure-button-primary');
+            });
+            history.pushState({}, "", link.href);
+            history.pushState({}, "", link.href);
+            history.back();
+            link.classList.add('pure-button-active');
+            link.classList.add('pure-button-primary');
+        });
+    });
+    </script>
+</body>
+
+</html>

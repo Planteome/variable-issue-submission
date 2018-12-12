@@ -1,0 +1,52 @@
+<legend>Submission Information</legend>
+<div class="pure-g" id="submission-form">
+    
+    <div class="pure-u-1 pure-u-md-1-3">
+        <label for="onto-repo">Ontology</label>
+        <select name="onto-repo" id="onto-repo" class="pure-u-23-24" required>
+            <option value="placeholder" disabled selected>Select crop...</option>
+            {% for repo in repos %}
+            <option value="{{repo}}">{{repos[repo]['name']}}</option>
+            {% endfor %}
+        </select>
+    </div>
+    
+    <div class="pure-u-1 pure-u-md-1-3">
+        <label for="name">Your Name</label>
+        <input name="name" autocomplete="name" id="name" class="pure-u-23-24" type="text" required>
+    </div>
+
+    <div class="pure-u-1 pure-u-md-1-3">
+        <label for="program">Your Organization</label>
+        <input name="program" autocomplete="organization" id="program" class="pure-u-23-24" type="text" required>
+    </div>
+    
+</div>
+
+<script type="text/javascript">
+    $(document).ready(function(){
+        $(".onto-needed").attr('disabled','disabled');
+    })
+    $("#onto-repo").change(function(){
+        window.ontology = {
+            'name':$(this).val(),
+            'loaded':false,
+            'terms':[]
+        }
+        if(!window.ontology.name) return;
+        $.ajax({
+            type: "GET",
+            url: "/variables?repo="+encodeURIComponent(ontology.name),
+            contentType: "application/json; charset=utf-8",
+            error: function(){
+                alert("Could not get variables");
+            },
+            success: function(data){
+                ontology.loaded = true;
+                console.log(data);
+                ontology.variables = data;
+                $(".onto-needed").removeAttr('disabled');
+            }
+        });
+    })
+</script>

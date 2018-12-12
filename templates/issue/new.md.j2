@@ -1,0 +1,24 @@
+## Creation Request
+
+|                        |                                  |
+| ---------------------- | -------------------------------- |
+| **Trait Name**         | {{data["trait-name"]|trim|e}}    |
+{%- if data["trait-syn"]!="" %}
+| **Proposed Synonyms**  | {{data["trait-syn"]|trim|e}}     |
+{%- endif %}
+| **Definition**         | {{data["trait-def"]|trim|e}}     |
+| **Trait Class**        | {{data["trait-class"]|trim|e}}   |
+| **Measurement Method** | {{data["method"]|trim|e}}        |
+| **Measurement Type**   | {{data["variable-type"]|trim|e}} |
+{%- if data["variable-type"]=="Unit" %}
+| **Measurement Unit**   | {{data["unit"]|trim|e}}          |
+{% else %}
+
+#### Categories
+
+| ID       | Description                   |
+| -------- | ----------------------------- |
+{%- for c in data["categories"] %}
+| **{{c[0]|trim|e}}** | {{c[1]|trim|e}}    |
+{%- endfor %}
+{% endif %}

@@ -1,0 +1,204 @@
+<div class="pure-g" id="new-form">
+    
+    <div class="pure-u-1 pure-u-md-1-2">
+        <label for="trait-name">Detailed Trait Name</label>
+        <input name="trait-name" id="trait-name" class="pure-u-23-24 onto-needed" type="text" required>
+    </div>
+    
+    <div class="pure-u-1 pure-u-md-1-2">
+        <label for="trait-class">Trait Class</label>
+        <select name="trait-class" id="trait-class" class="pure-u-23-24" required>
+            <option value="placeholder" disabled selected>Select variable class...</option>
+            <option value="Abiotic Stress"> Abiotic Stress (e.g. drought tolerance) </option>
+            <option value="Agronomic"> Agronomic (e.g. yield, root weight) </option>
+            <option value="Biotic Stress"> Biotic Stress (e.g. disease tolerance) </option>
+            <option value="Morphological"> Morphological (e.g. descriptors, plant architecture) </option>
+            <option value="Phenological"> Phenological (e.g. seed production) </option>
+            <option value="Physiological"> Physiological (e.g. hormones, development) </option>
+            <option value="Quality"> Quality (e.g. food quality traits) </option>
+            <option disabled hidden> Existing </option>
+        </select>
+    </div>
+    
+    <div class="pure-u-1 pure-u-md-1">
+        <label for="trait-syn">Proposed Synonyms</label>
+        <input name="trait-syn" id="trait-syn" class="pure-u-23-24 onto-needed optional" type="text" required>
+    </div>
+
+    <div class="pure-u-1 pure-u-md-1">
+        <label for="trait-def">Detailed Trait Definition</label>
+        <textarea id="trait-def" class="pure-u-23-24 onto-needed" name="trait-def" rows="4" required></textarea>
+    </div>
+    
+    <div class="pure-u-1 pure-u-md-1 existing-table" hidden>
+        <label>Existing Variables in this Ontology</label>
+        <table class="pure-table" style="table-layout: fixed;">
+            <thead>
+                <tr>
+                    <th style="width:10%">ID</th>
+                    <th style="width:45%">Name</th>
+                    <th style="width:45%">Description</th>
+                </tr>
+            </thead>
+            <tbody id="existing-body" style="font-size:0.75em">
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pure-u-1 pure-u-md-2-3">
+        <label for="method">Method of Measurement</label>
+        <input name="method" id="method" placeholder="e.g. 'visual rating of distribution of anthocyanin'" class="pure-u-23-24" type="text" required>
+    </div>
+    
+    <div class="pure-u-1 pure-u-md-2-3">
+        <label for="variable-type">Measurement Type</label>
+        <select name="variable-type" id="variable-type" class="pure-u-23-24" required>
+            <option value="placeholder" disabled selected>Select method type...</option>
+            <option value="Categorical">Categorical Measurement (e.g. [1,2,3,4,5] or [yellow, green, purple])</option>
+            <option value="Unit">Unit Measurement (e.g. kg)</option>
+        </select>
+    </div>
+</div>
+<div hidden showby="variable-type" showfor="Unit" id="unit-wrapper" class="pure-g">
+    <div class="pure-u-1 pure-u-md-2-3">
+        <label for="unit">Unit of Measurement</label>
+        <input name="unit" autocomplete="off" id="unit" class="pure-u-23-24" type="text" required>
+    </div>
+</div>
+<legend hidden showby="variable-type" showfor="Categorical" id="categorical-label">Categories</legend>
+<div hidden showby="variable-type" showfor="Categorical" id="categorical-wrapper" class="pure-g">
+    <button name="add-category" id="add-category" type="button" class="pure-button">Add Category</button>
+    <input type="hidden" id="categories-count" value="0">
+</div>
+<div id="newtemplates" hidden>
+    <div class="pure-u-1 pure-g category">
+        <div class="pure-u-1 pure-u-md-7-24">
+            <label>Category</label>
+            <input name="category-name" class="pure-u-23-24" type="text" required>
+        </div>
+        <div class="pure-u-1 pure-u-md-7-24">
+            <label>Description</label>
+            <input name="category-desc" class="pure-u-23-24" type="text" required>
+        </div>
+        <div class="remove-div pure-u-1 pure-u-md-7-24">
+            <button type="button" class="remove-category pure-button button-error">X</button>
+        </div>
+    </div>
+</div>
+
+
+<script type="text/javascript">
+
+//Validation
+window.validators["#new"] = function(){
+    var $form = $('#new-form, #submission-form');
+    var filled = true;
+    $form.find('input[type=text]:not(.optional), textarea, select').filter("*:not([hidden],[hidden] *)").each(function() {
+        if ( !$(this).val()){
+            alert("Please fill out all fields.");
+            console.log(this);
+            $(this).focus();
+            filled = false;
+            return false;
+        }
+    });
+    if(!filled) return false;
+    
+    var valid = true;
+    $form.find('fieldset *:invalid').filter("*:not([hidden],[hidden] *)").each(function(){
+        alert("Invalid value.");
+        console.log(this);
+        $(this).focus();
+        valid = false;
+        return false;
+    })
+    if(!valid) return false;
+
+    var cat_counter = $('#categories-count');
+    if (cat_counter.is("*:not([hidden] *)") && parseInt(cat_counter.val())<2){
+        alert("Must have at least 2 categories.");
+        return false;
+    }
+    return true;
+}
+
+// Variable Search
+var on_trait_input = function(){
+    var options = {
+        shouldSort: true,
+        threshold: 0.1,
+        location: 0,
+        tokenize: true,
+        distance: 1000,
+        maxPatternLength: 2048,
+        minMatchCharLength: 1,
+        keys: [
+            "id",
+            "name",
+            "def",
+            "synonyms"
+        ]
+    };
+    var fuse = new Fuse(ontology.variables, options);
+    var search_text = $('#trait-def').val()+" "+$('#trait-name').val();
+    var result = fuse.search(search_text).slice(0,10);
+    var existing_body = $("#existing-body");
+    var existing_rows = existing_body.children("tr");
+    var diff = result.length - existing_rows.length;
+    if (diff>0){
+        for (var i = 0; i < diff; i++) {
+            existing_body.append('<tr class="existing-term"><td class="existing-id"></td><td class="existing-name"></td><td class="existing-def"></td></tr>')
+        }
+    } 
+    else if(diff<0){
+        existing_rows.slice(existing_rows.length+diff,existing_rows.length).remove();
+    }
+    
+    if (result.length>0){
+        $(".existing-table").attr("hidden", false);
+    }
+    else {
+        $(".existing-table").attr("hidden", true);
+    }     
+    
+    existing_body.children("tr.existing-term").each(function(i){
+        $(this).children(".existing-id").html(result[i]["id"]);
+        $(this).children(".existing-name").html(result[i]["name"]);
+        $(this).children(".existing-def").html(result[i]["def"]);
+    })
+};
+var trait_input_timeout;
+$('#trait-def, #trait-name').on("input",function() {
+    var context = this, args = arguments;
+    var later = function() {
+        trait_input_timeout = null;
+        on_trait_input.apply(context, args);
+    };
+    clearTimeout(trait_input_timeout);
+    trait_input_timeout = setTimeout(later, 200);
+})
+
+$('#variable-type').change(function(){
+    $('[showby="variable-type"][showfor]').attr("hidden", true);
+    $('[showby="variable-type"][showfor="'+$(this).val()+'"]').attr("hidden", false);
+})
+
+var category_template = $('#newtemplates>.category');
+category_template.detach();
+$("#add-category").click(function() { 
+    $('#categories-count').val( function(i, oldval) {
+        return parseInt(oldval)+1;
+    });
+    console.log($('#categories-count').val());
+    var newRow = category_template.clone(true).insertBefore("#add-category");
+    newRow.find(".remove-category").click(function(){
+        $('#categories-count').val( function(i, oldval) {
+            return parseInt(oldval)-1;
+        });
+        console.log($('#categories-count').val());
+        newRow.remove();
+        return false;
+    });
+    return false; 
+}); 
+</script>

@@ -1,0 +1,17 @@
+## Submitter
+
+|             |                            |
+| ----------- | -------------------------- |
+| **Name**    | {{data["name"]|trim|e}}    |
+| **Program** | {{data["program"]|trim|e}} |
+{%- if data["email"]!="" %}
+| **Email**   | {{data["email"]|trim|e}}   |
+{% endif %}
+
+{% if data["subtype"]=="new" %}
+{% include 'issue/new.md.j2' %}
+{% elif data["subtype"]=="update" %}
+{% include 'issue/update.md.j2' %}
+{% elif data["subtype"]=="synonym" %}
+{% include 'issue/synonym.md.j2' %}
+{% endif %}

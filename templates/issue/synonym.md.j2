@@ -1,0 +1,10 @@
+## Synonym Request
+
+|                      |                                   |
+| -------------------- | --------------------------------- |
+| **Original Term**    | {{data["synonym-search-selected"]|trim|e}}       |
+| **Synonym Text**     | {{data["synonym-text"]|trim|e}}   |
+{%- if data["synonym-xref"]!="" %}
+| **Cross Reference(s)** | {{data["synonym-xref"]|trim|e}}   |
+{%- endif %}
+| **Rational**         | {{data["synonym-reason"]|trim|e}} |
