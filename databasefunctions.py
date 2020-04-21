@@ -36,15 +36,15 @@ def parse_and_update(repo,obo):
     search_data = []
     o = pyobo(obo)
     for term in o.getTerms():
-        if any(relationship.value.relation.id == "variable_of" for relationship in term["relationship"]):
+#        if any(relationship.value.relation.id == "variable_of" for relationship in term["relationship"]):
             #is a variable
-            search_data.append({
-                "id":term["id"].value.id,
-                "name":term["name"].value,
-                "def":term["def"].value if "def" in term else "",
-                "synonyms":", ".join([syn.value for syn in term["synonym"]]),
-            })
-            
+         search_data.append({
+             "id":term["id"].value.id,
+             "name":term["name"].value,
+             "def":term["def"].value if "def" in term else "",
+              "synonyms":", ".join([syn.value for syn in term["synonym"]]),
+         })
+         
     update_variables(repo, search_data)
     
 def get_variables(repo):
