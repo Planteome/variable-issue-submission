@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Crop Ontology Request Form</title>
+    <title>Planteome-CO Request Form</title>
     <link rel="stylesheet" href="static/css/pure-min.css">
     <link rel="stylesheet" href="static/css/grids-responsive-min.css">
     <link rel="stylesheet" href="static/css/style.css">
@@ -19,10 +19,12 @@
         <div class="pure-u-2-24"></div>
         <div class="pure-u-20-24">
             <br>
-            <img src="/static/images/crop_ontology.png" class="logo-img" alt="crop ontology">
-            <img src="/static/images/planteome.png" class="logo-img" alt="planteome">
-            <img src="/static/images/bti.jpg" class="logo-img" alt="boyce thompson institute">
-            <h1>Crop Ontology Variable Request Form</h1>
+            <a href="http://planteome.org"> <img src="/static/images/planteome.png" class="logo-img" alt="planteome"></a>
+            <a href="http://cropontology.org"><img src="/static/images/crop_ontology.png" class="logo-img" alt="crop ontology"></a>
+            <a href="http://wheat.pw.usda.gov"><img src="/static/images/graingenes.png" class="logo-img" alt="grain genes"></a>
+            <a href="https://triticeaetoolbox.org"><img src="/static/images/T3_black.png" class="logo-img" alt="T3"></a>
+            <a href="http://btiscience.org"><img src="/static/images/bti.jpg" class="logo-img" alt="boyce thompson institute"></a>
+            <h1>Planteome-CO Term Request Form</h1>
             <form id="vairable-form" class="pure-form pure-form-stacked">
                 <script type="text/javascript">window.validators = []</script>
                 <fieldset>
@@ -33,9 +35,9 @@
                     
                     <legend>Request Type</legend>
                     <div class="pure-button-group" role="group" aria-label="..." style="white-space:nowrap;">
-                        <a href="#new" class="pure-button tab-controller">New Variable</a>
-                        <a href="#update" class="pure-button tab-controller">Update Variable</a>
-                        <a href="#synonym" class="pure-button tab-controller">Variable Synonym</a>
+                        <a href="#new" class="pure-button tab-controller">New Term</a>
+                        <a href="#update" class="pure-button tab-controller">Update Term</a>
+                        <a href="#synonym" class="pure-button tab-controller">Term Synonym</a>
                     </div>
                     <br><br>
                     <div id="new" class="tab-div">
@@ -80,10 +82,16 @@
             </form>
             <br><br>
             <hr>
+	    <!--
             <a class="pure-button" href="https://github.com/apps/ontology-variable-submission-bot">Connect a New OBO Repository to this Form</a>
             <br><br>
+	    -->
+	<p>
+	<a href="https://nsf.gov"> <img src="/static/images/NSF_Logo.png" class="logo-img" alt="NSF"></a>
+	Planteome is supported by primary funding (<a href="http://www.nsf.gov/awardsearch/showAward?AWD_ID=1340112">IOS:1340112 award</a>) from the National Science Foundation of USA.
+	</p>    
         </div>
-    </div>
+</div>
     <script type="text/javascript">
 
     $('#emailsubmit').click(function(){
