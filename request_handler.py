@@ -47,7 +47,7 @@ def make_issue(data,token=False):
     if not token:
         token = ah.installationToken(db.get_installation(data['onto-repo']))
         print(token)
-    url = 'https://api.github.com/repos/{repo}/issues?access_token={token}'.format(repo=data['onto-repo'],token=token)
+    url = 'https://api.github.com/repos/{repo}/issues'.format(repo=data['onto-repo'])
     title = ""
     if data["subtype"]=="new":
         title = "Create: "+data['trait-name']
@@ -58,7 +58,9 @@ def make_issue(data,token=False):
     issue = {'title': title,
              'body': render_template('issue.md.j2', data=data)}
     print(url,issue)
-    r = requests.session().post(url,json=issue)
+    s = requests.session()
+    s.headers.update({'Authorization': 'token {token}'.format(token=token)})
+    r = s.post(url,json=issue)
     if r.status_code == 201:
         print('Success')
         assign_and_label_issue(json.loads(r.content),data)
@@ -71,7 +73,7 @@ def make_issue(data,token=False):
 # assign labels and assignees
 def assign_and_label_issue(issue_obj,data):
     token = ah.installationToken(db.get_installation(data['onto-repo']))
-    url = issue_obj["url"]+'?access_token={token}'.format(token=token)
+    url = issue_obj["url"]
     assignees = db.get_repo_info(repo=data['onto-repo'])["curators"]
     labels = []
     if data["subtype"]=="new":
@@ -81,7 +83,9 @@ def assign_and_label_issue(issue_obj,data):
     elif data["subtype"]=="synonym":
         labels.append("Synonym Request")
     
-    r = requests.session().patch(url,json={
+    s = requests.session()
+    s.headers.update({'Authorization': 'token {token}'.format(token=token)})
+    r = s.patch(url,json={
         "labels":labels,
         "assignees":assignees
     })
@@ -213,8 +217,10 @@ def update_installation(data):
 def get_latest_releases(repos):
     for repo in repos:
         token = ah.installationToken(db.get_installation(repo))
-        release_info = "https://api.github.com/repos/{repo}/releases/latest?access_token={token}".format(repo=repo,token=token)
-        info = requests.session().get(release_info).json()
+        release_info = "https://api.github.com/repos/{repo}/releases/latest".format(repo=repo)
+        s = requests.session()
+        s.headers.update({'Authorization': 'token {token}'.format(token=token)})
+        info = s.get(release_info).json()
         if not 'zipball_url' in info:
             print("No release for {repo}".format(repo=repo))
         else:
@@ -225,8 +231,10 @@ def dowload_obo(repo,zipball_url):
     print("Downloading release for {repo}:".format(repo=repo),zipball_url)
     token = ah.installationToken(db.get_installation(repo))
     obopath = Path(db.get_repo_info(repo=repo)['master_obo_path'])
-    download = zipball_url+"?access_token={token}".format(token=token)
-    r = requests.session().get(download)
+    download = zipball_url
+    s = requests.session()
+    s.headers.update({'Authorization': 'token {token}'.format(token=token)})
+    r = s.get(download)
     with zipfile.ZipFile(io.BytesIO(r.content)) as zp:
         obos = [f for f in zp.namelist() if obopath==Path(f).relative_to(f.split(os.path.sep)[0])]
         obos.sort()
