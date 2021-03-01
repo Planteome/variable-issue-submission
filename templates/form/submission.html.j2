@@ -4,7 +4,7 @@
     <div class="pure-u-1 pure-u-md-1-3">
         <label for="onto-repo">Ontology</label>
         <select name="onto-repo" id="onto-repo" class="pure-u-23-24" required>
-            <option value="placeholder" disabled selected>Select crop...</option>
+            <option value="placeholder" disabled selected>Select Ontology...</option>
             {% for repo in repos %}
             <option value="{{repo}}">{{repos[repo]['name']}}</option>
             {% endfor %}
